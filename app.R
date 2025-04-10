@@ -1,84 +1,94 @@
 # Load libraries
-library(shiny)
 library(rvest)
 library(tidyverse)
 library(lubridate)
 library(jsonlite)
 library(janitor)
+library(dplyr)
+library(DT)
 
-# Scrape the leaderboard table
-get_leaderboard <- function() {
-  tryCatch({
-    url <- 'https://www.espn.com/golf/leaderboard'
-    page <- read_html(url)
-    tables <- html_nodes(page, "table") %>% html_table(fill = TRUE)
-    leaderboard <- as.data.frame(tables[[1]])
-    names(leaderboard) <- make_clean_names(names(leaderboard))
-    leaderboard <- leaderboard %>% filter(player != "")
-    return(leaderboard)
-  }, error = function(e) {
-    data.frame(player = "Error", score = "Could not fetch data")
-  })
+# Helper function to clean and process leaderboard data
+process_team_data <- function(team_data) {
+  team_data$R1 <- as.numeric(as.character(team_data$R1))
+  team_data$R2 <- as.numeric(as.character(team_data$R2))
+  team_data$R3 <- as.numeric(as.character(team_data$R3))
+  team_data$R4 <- as.numeric(as.character(team_data$R4))
+
+  team_data <- team_data %>%
+    mutate(PENALTY = if_else(SCORE == "CUT", 154, 0))
+  
+  team_data[team_data == "--"] <- NA
+  team_data <- adorn_totals(team_data, where = "col", fill = "-", na.rm = TRUE)
+  team_data <- adorn_totals(team_data, where = "row", fill = "-", na.rm = TRUE)
+  
+  return(team_data)
 }
 
-leaderboard <- get_leaderboard()
+# Scrape leaderboard data
+url <- 'https://www.espn.com/golf/leaderboard?tournamentId=401703504'
+webpage <- read_html(url)
+node_list <- webpage %>% html_nodes("table")
+leaderboard <- data.frame(node_list %>% html_table())
+leaderboard <- leaderboard %>% select(-c(Var.1))
 
-# Build fantasy teams
-create_team <- function(players, leaderboard) {
-  team <- leaderboard %>% filter(player %in% players)
-  team <- team %>%
-    mutate(across(starts_with("r"), ~as.numeric(gsub("--", NA, .)))) %>%
-    mutate(penalty = if_else(score == "CUT", 154, 0)) %>%
-    adorn_totals(where = "col", fill = "-", na.rm = TRUE) %>%
-    adorn_totals(where = "row", fill = "-", na.rm = TRUE)
-  return(team)
-}
+# Load team data (Marshall)
+marshall_team <- leaderboard %>%
+  filter(PLAYER %in% c("Scottie Scheffler", "Tom Kim", "Taylor Pendrith", "Tommy Fleetwood"))
+marshall_team <- process_team_data(marshall_team)
 
-marshall_players <- c("Scottie Scheffler", "Tom Kim", "Taylor Pendrith", "Tommy Fleetwood")
-adam_players <- c("Rory McIlroy", "Collin Morikawa", "Hideki Matsuyama", "Corey Conners")
+# Load team data (Adam)
+adam_team <- leaderboard %>%
+  filter(PLAYER %in% c("Rory McIlroy", "Collin Morikawa", "Hideki Matsuyama", "Corey Conners"))
+adam_team <- process_team_data(adam_team)
 
-marshall_team <- create_team(marshall_players, leaderboard)
-adam_team <- create_team(adam_players, leaderboard)
-
-# UI
+# Define UI for dataset viewer app
 ui <- fluidPage(
+  
+  # App title
   titlePanel("2025 Tariff International"),
   
+  # Sidebar layout with input and output definitions
   sidebarLayout(
+    
+    # Sidebar panel for inputs
     sidebarPanel(
-      selectInput("dataset", "Select Team or Leaderboard:", 
-                  choices = c("Leaderboard", "Marshall", "Adam")),
-      numericInput("obs", "Number of observations to view:", value = 10),
-      checkboxInput("show_totals", "Show totals row/column", value = TRUE)
+      selectInput(inputId = "dataset", 
+                  label = "View", 
+                  choices = c("Leaderboard", "Adam", "Marshall")),
+      
+      numericInput(inputId = "obs", 
+                   label = "Number of observations to view:", 
+                   value = 10)
     ),
+    
+    # Main panel for displaying outputs
     mainPanel(
-      h3(textOutput("caption")),
-      tableOutput("view")
+      h3(textOutput("caption", container = span)),
+      verbatimTextOutput("summary"),
+      DTOutput("view")
     )
   )
 )
 
-# Server
+# Define server logic to summarize and view selected dataset
 server <- function(input, output) {
+  
   datasetInput <- reactive({
-    data <- switch(input$dataset,
-                   "Leaderboard" = leaderboard,
-                   "Marshall" = marshall_team,
-                   "Adam" = adam_team)
-    if (!input$show_totals) {
-      data <- data[!grepl("Total", data$player, ignore.case = TRUE), ]
-    }
-    return(data)
+    switch(input$dataset,
+           "Leaderboard" = leaderboard,
+           "Adam" = adam_team,
+           "Marshall" = marshall_team)
   })
   
   output$caption <- renderText({
-    paste("Current View:", input$dataset)
+    input$caption
   })
   
-  output$view <- renderTable({
-    head(datasetInput(), n = input$obs)
+  output$view <- renderDT({
+    datatable(head(datasetInput(), n = input$obs), options = list(pageLength = 10))
   })
+  
 }
 
-# Run app
-shinyApp(ui = ui, server = server)
+# Create Shiny app
+shinyApp(ui, server)
