@@ -19,7 +19,7 @@ node_list <- webpage %>%
 leaderboard <- data.frame(node_list %>% 
                               html_table())
 leaderboard <- leaderboard %>%
-  select(-c(Var.1, Var.3))
+  select(-c(Var.1))
 
 paged_table(leaderboard)
 
