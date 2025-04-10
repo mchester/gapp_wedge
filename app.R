@@ -25,21 +25,16 @@ paged_table(leaderboard)
 
 #load team marshall
 
-Cameron_Smith <- leaderboard[leaderboard$PLAYER == "Cameron Smith", ] #LIV
 Scottie_Scheffler <- leaderboard[leaderboard$PLAYER == "Scottie Scheffler", ] #American
 Tom_Kim <- leaderboard[leaderboard$PLAYER == "Tom Kim", ] #Asia
-Jon_Rahm <- leaderboard[leaderboard$PLAYER == "Jon Rahm", ] #euro
-Jordan_Spieth <- leaderboard[leaderboard$PLAYER == "Jordan Spieth", ] #world 
-Sam_Bennett <- leaderboard[leaderboard$PLAYER == "Sam Bennett (a)", ] #amateur
-Max_Homa <- leaderboard[leaderboard$PLAYER == "Max Homa", ] #wildcard
+Taylor_Pendrith <- leaderboard[leaderboard$PLAYER == "Taylor Pendrith", ] #Canada
+Tommy_Fleetwood <- leaderboard[leaderboard$PLAYER == "Tommy Fleetwood", ] #UK
 
-marshall_team <- data.frame(rbind(Cameron_Smith, 
-                                  Scottie_Scheffler,
+
+marshall_team <- data.frame(rbind(Scottie_Scheffler,
                                   Tom_Kim,
-                                  Jon_Rahm,
-                                  Jordan_Spieth,
-                                  Sam_Bennett,
-                                  Max_Homa),
+                                  Taylor_Pendrith,
+                                  Tommy_Fleetwood),
                             header = TRUE,
                             stringsAsFactors = FALSE)
 
@@ -48,27 +43,21 @@ marshall_team$R2 <- as.numeric(as.character(marshall_team$R2))
 marshall_team$R3 <- as.numeric(as.character(marshall_team$R3))
 marshall_team$R4 <- as.numeric(as.character(marshall_team$R4))
 marshall_team <- subset(marshall_team, select = -c(header, TOT))
-marshall_team <- marshall_team %>% mutate(PENALTY = if_else(SCORE == "CUT", 160, 0))
+marshall_team <- marshall_team %>% mutate(PENALTY = if_else(SCORE == "CUT", 154, 0))
 marshall_team <- adorn_totals(marshall_team, where = "col", fill = "-", na.rm = TRUE)
 marshall_team <- adorn_totals(marshall_team, where = "row", fill = "-", na.rm = TRUE)
 
 #load team adam
 
 Rory_McIlroy <- leaderboard[leaderboard$PLAYER == "Rory McIlroy", ] #Euro
-Xander_Schauffele <- leaderboard[leaderboard$PLAYER == "Xander Schauffele", ] #Wildcard
 Collin_Morikawa <- leaderboard[leaderboard$PLAYER == "Collin Morikawa", ] #amateur
-Joaquin_Niemann <- leaderboard[leaderboard$PLAYER == "Joaquin Niemann", ] #Wildcard
-Tony_Finau <- leaderboard[leaderboard$PLAYER == "Tony Finau", ] #American
 Hideki_Matsuyama <- leaderboard[leaderboard$PLAYER == "Hideki Matsuyama", ] #Asia
-Dustin_Johnson <- leaderboard[leaderboard$PLAYER == "Dustin Johnson", ] #Asia
+Corey_Conners <- leaderboard[leaderboard$PLAYER == "Corey Conners", ] #Canada
 
 adam_team <- data.frame(rbind(Rory_McIlroy, 
-                              Xander_Schauffele,
-                              Collin_Morikawa, 
-                              Joaquin_Niemann,
-                              Tony_Finau,
+                              Collin_Morikawa,
                               Hideki_Matsuyama,
-                              Dustin_Johnson),
+                              Corey_Conners),
                         header = TRUE,
                         stringsAsFactors = FALSE)
 adam_team$R1 <- as.numeric(as.character(adam_team$R1))
@@ -76,7 +65,7 @@ adam_team$R2 <- as.numeric(as.character(adam_team$R2))
 adam_team$R3 <- as.numeric(as.character(adam_team$R3))
 adam_team$R4 <- as.numeric(as.character(adam_team$R4))
 adam_team <- subset(adam_team, select = -c(header, TOT))
-adam_team <- adam_team %>% mutate(PENALTY = if_else(SCORE == "CUT", 160, 0))
+adam_team <- adam_team %>% mutate(PENALTY = if_else(SCORE == "CUT", 154, 0))
 adam_team[adam_team == "--"] <- NA
 adam_team <- adorn_totals(adam_team, where = "col", fill = "-", na.rm = TRUE)
 adam_team <- adorn_totals(adam_team, where = "row", fill = "-", na.rm = TRUE)
@@ -85,7 +74,7 @@ adam_team <- adorn_totals(adam_team, where = "row", fill = "-", na.rm = TRUE)
 ui <- fluidPage(
     
     # App title ----
-    titlePanel("2023 Masters"),
+    titlePanel("2025 Tariff International"),
     
     # Sidebar layout with input and output definitions ----
     sidebarLayout(
